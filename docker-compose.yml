@@ -2,10 +2,11 @@ version: '2'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts-jdk11 # or bitnami/jenkins:latest
+    # image: jenkins/jenkins:lts-jdk11 # or bitnami/jenkins:latest
+    image: bitnami/jenkins:latest
     ports:
       - '8050:8080'
-      # - '8043:8443'   # For Bitnami container using HTTPS
+      - '8043:8443'   # For Bitnami container using HTTPS
       # - '50000:50000' # Enable JNLP port if you want to attach external workers using host networking
     volumes:
       - 'jenkins_home:/var/jenkins_home'
@@ -13,12 +14,12 @@ services:
       # - './server-scripts:/usr/share/jenkins/ref' # For Bitnami you must define JENKINS_SKIP_BOOTSTRAP=yes
       # - './server-config/config.xml:/usr/share/jenkins/ref/config.xml' # For Bitnami you must define JENKINS_SKIP_BOOTSTRAP=yes
     environment:
+      JENKINS_HOME: /var/jenkins_home # For Bitnami
+      JENKINS_EXTERNAL_HTTP_PORT_NUMBER: 8050 # For Bitnami
+      JENKINS_EXTERNAL_HTTPS_PORT_NUMBER: 8043 # For Bitnami
+      JENKINS_ENABLE_HTTPS: yes # For Bitnami      
       # JENKINS_PASSWORD: # password for the Bitnami container, def: password
-      # JENKINS_USERNAME: # username for the Bitnami container, def: user
-      # JENKINS_HOME: /var/jenkins_home # For Bitnami
-      # JENKINS_EXTERNAL_HTTP_PORT_NUMBER: 8050 # For Bitnami
-      # JENKINS_EXTERNAL_HTTPS_PORT_NUMBER: 8043 # For Bitnami
-      # JENKINS_ENABLE_HTTPS: yes # For Bitnami      
+      # JENKINS_USERNAME: # username for the Bitnami container, def: user      
     networks:
       - jenkins-network
   node1:
@@ -31,9 +32,25 @@ services:
       JENKINS_SECRET: # include your key from the Jenkins server and restart the stack - the worker should be connected to Jenkins server
     networks:
       - jenkins-network
+    profiles:
+      - nodes
+  node2:
+    build:
+      context: ./nodes/pytest-worker
+      dockerfile: Dockerfile
+    environment:
+      JENKINS_URL: http://jenkins:8080
+      JENKINS_AGENT_NAME: worker-pytest1
+      JENKINS_SECRET: # insert here
+    networks:
+      - jenkins-network
+    profiles:
+      - nodes
 
 volumes:
   jenkins_home:
+    driver: local
+  jenkins_data:
     driver: local
 
 networks:

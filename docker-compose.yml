@@ -2,24 +2,16 @@ version: '2'
 
 services:
   jenkins:
-    # image: jenkins/jenkins:lts-jdk11 # or bitnami/jenkins:latest
-    image: bitnami/jenkins:latest
+    image: jenkins/jenkins:lts-jdk11 # or bitnami/jenkins:latest
     ports:
       - '8050:8080'
       - '8043:8443'   # For Bitnami container using HTTPS
       # - '50000:50000' # Enable JNLP port if you want to attach external workers using host networking
     volumes:
       - 'jenkins_home:/var/jenkins_home'
-      - 'jenkins_data:/bitnami/jenkins' # Use this for the Bitnami container
-      # - './server-scripts:/usr/share/jenkins/ref' # For Bitnami you must define JENKINS_SKIP_BOOTSTRAP=yes
-      # - './server-config/config.xml:/usr/share/jenkins/ref/config.xml' # For Bitnami you must define JENKINS_SKIP_BOOTSTRAP=yes
+      # - './server-scripts:/usr/share/jenkins/ref'
     environment:
       JENKINS_HOME: /var/jenkins_home # For Bitnami
-      JENKINS_EXTERNAL_HTTP_PORT_NUMBER: 8050 # For Bitnami
-      JENKINS_EXTERNAL_HTTPS_PORT_NUMBER: 8043 # For Bitnami
-      JENKINS_ENABLE_HTTPS: yes # For Bitnami      
-      # JENKINS_PASSWORD: # password for the Bitnami container, def: password
-      # JENKINS_USERNAME: # username for the Bitnami container, def: user      
     networks:
       - jenkins-network
   node1:
@@ -49,8 +41,6 @@ services:
 
 volumes:
   jenkins_home:
-    driver: local
-  jenkins_data:
     driver: local
 
 networks:

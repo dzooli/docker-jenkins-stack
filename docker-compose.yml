@@ -5,7 +5,6 @@ services:
     image: jenkins/jenkins:lts-jdk11 # or bitnami/jenkins:latest
     ports:
       - '8050:8080'
-      - '8043:8443'   # For Bitnami container using HTTPS
       # - '50000:50000' # Enable JNLP port if you want to attach external workers using host networking
     volumes:
       - 'jenkins_home:/var/jenkins_home'

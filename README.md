@@ -4,9 +4,9 @@
 
 I have created this short tutorial for anyone who wants to test, improve knowledge, try something new about Jenkins CI/CD v2. The setup contains a Jenkins server a basic worker node and a PyTest capable worker node.
 
-### Steps to complete
+## Steps to complete
 
-1. Setup Jenkins server node
+1. Setup a Jenkins server node
 2. Add a simple worker node
 3. Add a Python capable worker node
 4. Create CI pipeline
@@ -23,12 +23,21 @@ I have created this short tutorial for anyone who wants to test, improve knowled
 
 ## Used tools and Docker images
 
-- Monitored for vulnerabilities by Bitnami
-- Pre-configured images for general usage
+### Docker images
 
-Additional tool is your favourite text editor and a shell. As a Linux fan I prefer Git Bash and VS Code.
+- jenkins/jenkins as the server
+- jenkins/inbound-agent as the base of the worker nodes
+
+### Tools
+
+- Your favorite text editor
+- A CLI utility or the embedded terminal in VS Code
+
+As a Linux fan I prefer Git Bash and VS Code.
 
 ## Let's start
+
+### The Jenkins server node
 
 We are using Docker compose to create the necessary services. First is the Jenkins server:
 
@@ -94,7 +103,7 @@ node1:
     dockerfile: Dockerfile
   environment:
     JENKINS_URL: http://jenkins:8080
-    JENKINS_AGENT_NAME: worker-base1
+    JENKINS_AGENT_NAME: worker1-base
     JENKINS_SECRET: # include your key from the Jenkins server and restart the stack - the worker should be connected to Jenkins server
   networks:
     - jenkins-network
@@ -114,8 +123,7 @@ Your `nodes/base-worker` directory should contain these files:
 
   USER jenkins
   COPY --chown=jenkins:jenkins ./* .
-  RUN chmod 700 ./wait-for-it.sh && \
-      chmod 700 ./entrypoint.sh
+  RUN chmod 700 ./entrypoint.sh
   ENTRYPOINT ["./entrypoint.sh"]
   ```
 
@@ -143,7 +151,7 @@ Your `nodes/base-worker` directory should contain these files:
     dockerfile: Dockerfile
   environment:
     JENKINS_URL: http://jenkins:8080
-    JENKINS_AGENT_NAME: worker-pytest1
+    JENKINS_AGENT_NAME: worker2-python
     JENKINS_SECRET: # insert here
   networks:
     - jenkins-network
@@ -154,18 +162,19 @@ Your `nodes/base-worker` directory should contain these files:
 
   ```Dockerfile
   ARG JENKINS_AGENT_NAME
-  ARG JENKINS_URL
-  ARG JENKINS_SECRET
-  FROM jenkinsci/jnlp-slave
+    ARG JENKINS_URL
+    ARG JENKINS_SECRET
+    FROM jenkins/inbound-agent
 
-  # Add the Python layer
-  FROM bitnami/python:3.10
+    USER root
+    RUN apt -y update && \
+        apt upgrade -y && \
+        apt install -y python3 && \
 
-  USER jenkins
-  COPY --chown=jenkins:jenkins ./* .
-  RUN chmod 700 ./wait-for-it.sh && \
-      chmod 700 ./entrypoint.sh
-  ENTRYPOINT ["./entrypoint.sh"]
+    USER jenkins
+    COPY --chown=jenkins:jenkins ./* .
+    RUN chmod 700 ./entrypoint.sh
+    ENTRYPOINT ["./entrypoint.sh"]
   ```
 
 - `entrypoint.sh` in `nodes/pytest-worker` is the same as used in the base-node
@@ -178,6 +187,8 @@ Restart your docker stack with nodes profile:
 docker-compose --profile nodes up
 ```
 
-Then login to the Jenkins server again. On the dashboard you will see the connected workers under the **Build Executor Status** section on the sidebar.
+If you experienced strange errors (like 'exec format error') and edited the files using Windows try to convert line endings to LF in the \*.sh files with the dos2unix utility.
 
-Now we completed the server and node setup.
+After successful start of the stack login to the Jenkins server again. On the dashboard you will see the connected workers under the **Build Executor Status** section on the sidebar.
+
+Now we completed the server and node setup. Let's create the build pipeline.

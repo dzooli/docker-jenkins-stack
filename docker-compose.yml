@@ -19,8 +19,8 @@ services:
       dockerfile: Dockerfile
     environment:
       JENKINS_URL: http://jenkins:8080
-      JENKINS_AGENT_NAME: worker-base1
-      JENKINS_SECRET: # include your key from the Jenkins server and restart the stack - the worker should be connected to Jenkins server
+      JENKINS_AGENT_NAME: worker1-base
+      JENKINS_SECRET: c68049c3b86ac8fb0d69b26472df3abdafa580377fb25ff696eef461748be100 
     networks:
       - jenkins-network
     profiles:
@@ -31,8 +31,8 @@ services:
       dockerfile: Dockerfile
     environment:
       JENKINS_URL: http://jenkins:8080
-      JENKINS_AGENT_NAME: worker-pytest1
-      JENKINS_SECRET: # insert here
+      JENKINS_AGENT_NAME: worker2-python
+      JENKINS_SECRET: 28b6f0e32b0f68858ffcc37f18d12806b699d5319708f17beed2ea432d363243
     networks:
       - jenkins-network
     profiles:

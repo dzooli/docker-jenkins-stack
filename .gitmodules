@@ -1,0 +1,3 @@
+[submodule "testcase"]
+	path = testcase
+	url = https://github.com/dzooli/docker-jenkins-test.git

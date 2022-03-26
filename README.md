@@ -9,10 +9,13 @@ I have created this short tutorial for anyone who wants to test, improve knowled
 1. Setup a Jenkins server node
 2. Add a simple worker node
 3. Add a Python capable worker node
-4. Create CI pipeline
+4. Create build steps
    1. Clone test repository from GitHub
-   2. Run a simple test case with PyTest
-5. Investigate further improvement possibilities
+   2. Install requirements
+   3. Run a simple test case with PyTest
+5. Create the build pipeline
+6. Run the pipeline
+7. Investigate further improvement possibilities
 
 ## Requirements
 
@@ -33,8 +36,6 @@ I have created this short tutorial for anyone who wants to test, improve knowled
 - Your favorite text editor
 - A CLI utility or the embedded terminal in VS Code
 
-As a Linux fan I prefer Git Bash and VS Code.
-
 ## Let's start
 
 ### The Jenkins server node
@@ -42,7 +43,7 @@ As a Linux fan I prefer Git Bash and VS Code.
 We are using Docker compose to create the necessary services. First is the Jenkins server:
 
 ```yaml
-version: "2"
+version: "3"
 
 services:
   jenkins:
@@ -50,7 +51,7 @@ services:
     ports:
       - "8050:8080"
       - "8043:8443" # For Bitnami container using HTTPS
-      # - '50000:50000' # Enable JNLP port if you want to attach external workers using host networking
+      # - '50000:50000' # Enable JNLP (Java Network Launch Protocol) port if you want to attach external workers using host networking
     volumes:
       - "jenkins_home:/var/jenkins_home"
       # - './server-scripts:/usr/share/jenkins/ref'
@@ -88,7 +89,7 @@ Now we are able to setup the worker nodes. Click on **Set up an agent** button t
 
 #### Python node
 
-Like in the previous step setup another agent but add a `python` label separated by space.
+Like in the previous step setup another agent but add a `python` label separated by space. Also increase the 'Number of executors' value at least to 3.
 
 ### Add the worker nodes to the stack
 
@@ -107,8 +108,6 @@ node1:
     JENKINS_SECRET: # include your key from the Jenkins server and restart the stack - the worker should be connected to Jenkins server
   networks:
     - jenkins-network
-  profiles:
-    - nodes
 ```
 
 Your `nodes/base-worker` directory should contain these files:
@@ -155,8 +154,6 @@ Your `nodes/base-worker` directory should contain these files:
     JENKINS_SECRET: # insert here
   networks:
     - jenkins-network
-  profiles:
-    - nodes
   ```
 - `Dockerfile` in `nodes/pytest-worker`
 
@@ -169,7 +166,7 @@ Your `nodes/base-worker` directory should contain these files:
     USER root
     RUN apt -y update && \
         apt upgrade -y && \
-        apt install -y python3 && \
+        apt install -y python3 python3-pip python3-venv
 
     USER jenkins
     COPY --chown=jenkins:jenkins ./* .
@@ -181,14 +178,99 @@ Your `nodes/base-worker` directory should contain these files:
 
 **Do not forget to insert the node secrets and node names** to the compose file. The secrets are available in Jenkins from **Dashboard => Manage Jenkins => Manage Nodes and Clouds** ([Manage Nodes page](http://localhost:8050/computer))
 
-Restart your docker stack with nodes profile:
+Restart your docker stack with all the created nodes:
 
 ```bash
-docker-compose --profile nodes up
+docker compose up --build
 ```
 
 If you experienced strange errors (like 'exec format error') and edited the files using Windows try to convert line endings to LF in the \*.sh files with the dos2unix utility.
 
 After successful start of the stack login to the Jenkins server again. On the dashboard you will see the connected workers under the **Build Executor Status** section on the sidebar.
 
-Now we completed the server and node setup. Let's create the build pipeline.
+Now we completed the server and node setup. Let's create the build steps.
+
+### Build step definitions
+
+**General recommendation**: Use underscores instead of spaces or do not use spaces in the job names. Your life will be easier without spaces.
+
+#### Clone source repository step
+
+On the dashboard of Jenkins click the **Create a job** button and name the Job as _CloneTests_. Select **Freestyle project**.
+
+Restrict the build for our Python-capable node by checking **Restrict where this project can be run** checkbox and selecting the **python** node from the dropdown list:
+
+![nodelock](doc/images/005_restrict.png)
+
+This build step should be used in a pipeline so we will to set it as parametrized build and add the parameter like this:
+
+![params](doc/images/006_parameters.png)
+
+Configure the Git repository in the **Source Code Management** section:
+
+![repo](/doc/images/007_repo.png)
+
+In the **Build Environment** section check **Delete workspace before build starts** and save the job.
+
+Go forward with the preparation step.
+
+#### Create Python Virtual Environment step
+
+Create another parametrized **Freestyle Job** named **PythonVenvActivate** similar to the previous but without source code management.
+
+Declare the parameter name as **VENV_WORKSPACE_DIR** which should be used in the build process.
+
+Add a build step **Execute Shell** and use this small script to create the python virtual environment and install the dependencies:
+
+```bash
+#!/bin/bash
+cd ../${VENV_WORKSPACE_DIR}
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+```
+
+#### Install dependencies step
+
+Create the preparation step as a **Freestyle Job** named **PythonVenvTestRun** with same parameters and also restricted to the python node with the following **Execute Shell** build step:
+
+```bash
+#!/bin/bash
+cd ../$VENV_WORKSPACE_DIR
+source venv/bin/activate
+pytest -v
+```
+
+### Pipeline definition
+
+In this final step we should use the previously defined building blocks to define the pipeline.
+
+Create a new **Pipeline** job, set it to parametrized and add two string parameters: _GIT_REPO_ and _VENV_WORKSPACE_DIR_.
+
+In the pipeline section select **Pipeline script** and add the following snippet to the textarea:
+
+```ruby
+pipeline {
+    agent {label 'python'}
+    stages {
+        stage('Clone') {
+            steps {
+                build job: 'CloneTests',
+                parameters: [string(name: 'GIT_REPO', value: params.GIT_REPO)]
+            }
+        }
+        stage ('Init') {
+            steps {
+                build job: 'PythonVenvInit',
+                parameters: [string(name: 'VENV_WORKSPACE_DIR', value: params.VENV_WORKSPACE_DIR)]
+            }
+        }
+        stage('Test') {
+            steps {
+                build job: 'PythonVenvTestRun',
+                parameters: [string(name: 'VENV_WORKSPACE_DIR', value: params.VENV_WORKSPACE_DIR)]
+            }
+        }
+    }
+}
+```

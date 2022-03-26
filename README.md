@@ -245,7 +245,7 @@ pytest -v
 
 In this final step we should use the previously defined building blocks to define the pipeline.
 
-Create a new **Pipeline** job named _RunMainTests_, set it to parametrized and add two string parameters: _GIT_REPO_ and _VENV_WORKSPACE_DIR_.
+Create a new **Pipeline** job named _RunMainTests_, set it to parametrized and add two string parameters: _GIT_REPO_ and _VENV_WORKSPACE_DIR_ with default values used in the previous step defintions.
 
 In the pipeline section select **Pipeline script** and add the following snippet to the textarea:
 
@@ -274,3 +274,22 @@ pipeline {
     }
 }
 ```
+
+### Starting the pipeline
+
+On the Jenkins dashboard view you can start the pipeline by clicking on the green play button at the end of the table rows.
+
+![build](doc/images/008_build.png)
+
+### Final words
+
+Finally we are ready to automate the world but the path is really long. Don't worry, an 1000 step long path is also starting with the first step.
+
+## Further improvement ideas
+
+- Secure the Jenkins server with HTTPS
+- Use folders for job organization (**Folder** type on the job creation page)
+- Define more reusable jobs
+- Explore the world of Jenkins plugins (tons of existing plugins are in the world)
+- Use dynamic worker node creation by automating the Jenkins itself.
+- Explore the Jenkins API

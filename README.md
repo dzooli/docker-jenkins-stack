@@ -216,7 +216,7 @@ Go forward with the preparation step.
 
 #### Create Python Virtual Environment step
 
-Create another parametrized **Freestyle Job** named **PythonVenvActivate** similar to the previous but without source code management.
+Create another parametrized **Freestyle Job** named _PythonVenvInit_ similar to the previous but without source code management.
 
 Declare the parameter name as **VENV_WORKSPACE_DIR** which should be used in the build process.
 
@@ -232,7 +232,7 @@ pip3 install -r requirements.txt
 
 #### Install dependencies step
 
-Create the preparation step as a **Freestyle Job** named **PythonVenvTestRun** with same parameters and also restricted to the python node with the following **Execute Shell** build step:
+Create the preparation step as a **Freestyle Job** named _PythonVenvTestRun_ with same parameters and also restricted to the python node with the following **Execute Shell** build step:
 
 ```bash
 #!/bin/bash
@@ -245,7 +245,7 @@ pytest -v
 
 In this final step we should use the previously defined building blocks to define the pipeline.
 
-Create a new **Pipeline** job, set it to parametrized and add two string parameters: _GIT_REPO_ and _VENV_WORKSPACE_DIR_.
+Create a new **Pipeline** job named _RunMainTests_, set it to parametrized and add two string parameters: _GIT_REPO_ and _VENV_WORKSPACE_DIR_.
 
 In the pipeline section select **Pipeline script** and add the following snippet to the textarea:
 

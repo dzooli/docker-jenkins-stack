@@ -1,16 +1,14 @@
-version: '2'
+version: '3.9'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts-jdk11 # or bitnami/jenkins:latest
+    image: jenkins/jenkins:lts-jdk11
     ports:
       - '8050:8080'
-      # - '50000:50000' # Enable JNLP port if you want to attach external workers using host networking
     volumes:
       - 'jenkins_home:/var/jenkins_home'
-      # - './server-scripts:/usr/share/jenkins/ref'
     environment:
-      JENKINS_HOME: /var/jenkins_home # For Bitnami
+      JENKINS_HOME: /var/jenkins_home
     networks:
       - jenkins-network
   node1:
@@ -20,11 +18,10 @@ services:
     environment:
       JENKINS_URL: http://jenkins:8080
       JENKINS_AGENT_NAME: worker1-base
-      JENKINS_SECRET: c68049c3b86ac8fb0d69b26472df3abdafa580377fb25ff696eef461748be100 
+      JENKINS_SECRET: c68049c3b86ac8fb0d69b26472df3abdafa580377fb25ff696eef461748be100
     networks:
       - jenkins-network
-    profiles:
-      - nodes
+
   node2:
     build:
       context: ./nodes/pytest-worker
@@ -35,8 +32,6 @@ services:
       JENKINS_SECRET: 28b6f0e32b0f68858ffcc37f18d12806b699d5319708f17beed2ea432d363243
     networks:
       - jenkins-network
-    profiles:
-      - nodes
 
 volumes:
   jenkins_home:

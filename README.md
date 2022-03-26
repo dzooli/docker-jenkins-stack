@@ -293,3 +293,9 @@ Finally we are ready to automate the world but the path is really long. Don't wo
 - Explore the world of Jenkins plugins (tons of existing plugins are in the world)
 - Use dynamic worker node creation by automating the Jenkins itself.
 - Explore the Jenkins API
+
+## References and Links
+
+- [https://www.jenkins.io/doc/book/pipeline/syntax/](https://www.jenkins.io/doc/book/pipeline/syntax/)
+- [https://www.jenkins.io/doc/book/using/](https://www.jenkins.io/doc/book/using/)
+- [https://docs.oracle.com/javase/tutorial/deployment/deploymentInDepth/jnlp.html](https://docs.oracle.com/javase/tutorial/deployment/deploymentInDepth/jnlp.html)

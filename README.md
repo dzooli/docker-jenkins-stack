@@ -59,12 +59,19 @@ services:
       JENKINS_HOME: /var/jenkins_home # For Bitnami
     networks:
       - jenkins-network
+
+volumes:
+  jenkins_home:
+    driver: local
+
+networks:
+  jenkins-network:
 ```
 
 As the JNLP port is not exposed by default we are able to reach the JNLP functionality from inside `jenkins-network` only. After starting the stack with:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 the server will be available on [http://localhost:8050/](https://localhost:8050/)
